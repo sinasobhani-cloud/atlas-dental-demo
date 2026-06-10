@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas Dental — Practice Pulse</title>
+<style>
+  :root {
+    --bg: #f6f8fa; --card: #ffffff; --ink: #1a2733; --muted: #5d6b7a;
+    --line: #e3e8ee; --accent: #0e7490; --accent-soft: #e0f2f7;
+    --good: #15803d; --warn: #b45309; --bad: #b91c1c;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 15px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 28px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+  header h1 span { color: var(--accent); }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header select { margin-left: auto; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 14px; color: var(--ink); }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 26px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .kpi .label { font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .kpi .value { font-size: 28px; font-weight: 750; margin-top: 4px; letter-spacing: -0.5px; }
+  .kpi .hint { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .kpi.money .value { color: var(--accent); }
+  .kpi.alert .value { color: var(--bad); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 22px; overflow: hidden; }
+  section > h2 { font-size: 15px; padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  section > h2 .badge { background: var(--accent-soft); color: var(--accent); font-size: 12px; padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+  section > h2 .note { margin-left: auto; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 9px 18px; border-bottom: 1px solid var(--line); background: #fafbfc; }
+  td { padding: 10px 18px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafcfd; }
+  .money { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+  .pill.ok { background: #ecfdf3; color: var(--good); }
+  .pill.warn { background: #fef6e7; color: var(--warn); }
+  .pill.bad { background: #feecec; color: var(--bad); }
+  .procs { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+  .contact { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+  .empty { padding: 26px 18px; color: var(--muted); text-align: center; }
+  #status { padding: 60px; text-align: center; color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Atlas <span>Dental</span></h1>
+    <div class="sub">Practice Pulse — powered by Open Dental</div>
+  </div>
+  <select id="locationSelect" aria-label="Location"></select>
+</header>
+
+<main>
+  <div id="status">Loading practice data from Open Dental…</div>
+  <div id="content" style="display:none">
+    <div class="kpis" id="kpis"></div>
+
+    <section>
+      <h2>Unscheduled Treatment <span class="badge" id="unschedBadge"></span>
+        <span class="note">Treatment-planned dollars with no upcoming appointment — today's call list</span></h2>
+      <div id="unscheduledTable"></div>
+    </section>
+
+    <section>
+      <h2>Overdue Recall <span class="badge" id="recallBadge"></span>
+        <span class="note">Hygiene recall past due with nothing scheduled</span></h2>
+      <div id="recallTable"></div>
+    </section>
+
+    <section>
+      <h2>Upcoming Appointments <span class="badge" id="apptBadge"></span>
+        <span class="note">Next 14 days</span></h2>
+      <div id="apptTable"></div>
+    </section>
+  </div>
+</main>
+<footer id="meta"></footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const usd = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function loadLocations() {
+  const locs = await (await fetch('/api/locations')).json();
+  $('locationSelect').innerHTML = locs.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  $('locationSelect').onchange = () => load($('locationSelect').value);
+  return locs;
+}
+
+function kpiCard(label, value, hint, cls = '') {
+  return `<div class="kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`;
+}
+
+function table(headers, rows, emptyMsg) {
+  if (!rows.length) return `<div class="empty">${emptyMsg}</div>`;
+  return `<table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+async function load(locationId = 0) {
+  $('status').style.display = 'block';
+  $('content').style.display = 'none';
+  $('status').textContent = 'Loading practice data from Open Dental…';
+  let d;
+  try {
+    const res = await fetch(`/api/dashboard?location=${locationId}`);
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    d = await res.json();
+  } catch (e) {
+    $('status').textContent = 'Could not reach Open Dental: ' + e.message;
+    return;
+  }
+
+  $('kpis').innerHTML =
+    kpiCard('Unscheduled Treatment', usd(d.kpis.unscheduledValue), `${d.kpis.unscheduledPatients} patients`, 'money') +
+    kpiCard('Overdue Recall', d.kpis.overdueRecalls, 'patients past due', d.kpis.overdueRecalls > 0 ? 'alert' : '') +
+    kpiCard('Appointments', d.kpis.appointmentsNext14, 'next 14 days') +
+    kpiCard('Unconfirmed', d.kpis.unconfirmedNext14, 'need confirmation', d.kpis.unconfirmedNext14 > 0 ? 'alert' : '');
+
+  $('unschedBadge').textContent = usd(d.kpis.unscheduledValue);
+  $('unscheduledTable').innerHTML = table(
+    ['Patient', 'Contact', 'Treatment Planned', 'Oldest Plan', 'Value'],
+    d.unscheduledTreatment.map((p) => `<tr>
+      <td><strong>${esc(p.name)}</strong></td>
+      <td class="contact">${esc(p.phone)}${p.email ? '<br>' + esc(p.email) : ''}</td>
+      <td>${p.procedures.map((x) => esc(`${x.code} ${x.description}`)).join('<br>')}
+          <div class="procs">${p.procedures.length} procedure${p.procedures.length > 1 ? 's' : ''}</div></td>
+      <td>${p.oldestTpDate ? esc(p.oldestTpDate) : '—'}</td>
+      <td class="money">${usd(p.total)}</td></tr>`),
+    'No unscheduled treatment — everything is booked.');
+
+  $('recallBadge').textContent = d.kpis.overdueRecalls;
+  $('recallTable').innerHTML = table(
+    ['Patient', 'Contact', 'Due Date', 'Interval'],
+    d.overdueRecall.map((r) => `<tr>
+      <td><strong>${esc(r.name)}</strong></td>
+      <td class="contact">${esc(r.phone)}${r.email ? '<br>' + esc(r.email) : ''}</td>
+      <td><span class="pill bad">${esc(r.dateDue)}</span></td>
+      <td>${esc(r.interval)}</td></tr>`),
+    'No overdue recalls.');
+
+  $('apptBadge').textContent = d.kpis.appointmentsNext14;
+  $('apptTable').innerHTML = table(
+    ['When', 'Patient', 'Provider', 'Procedures', 'Status'],
+    d.upcomingAppointments.map((a) => `<tr>
+      <td style="white-space:nowrap">${esc(a.dateTime.slice(0, 16))}</td>
+      <td><strong>${esc(a.name)}</strong>${a.isNewPatient ? ' <span class="pill ok">NEW</span>' : ''}</td>
+      <td>${esc(a.provider)}</td>
+      <td>${esc(a.procedures) || '—'}</td>
+      <td><span class="pill ${a.confirmed === 'Unconfirmed' ? 'warn' : 'ok'}">${esc(a.confirmed)}</span></td></tr>`),
+    'No appointments scheduled in the next 14 days.');
+
+  $('meta').textContent = `${d.location.name} · refreshed ${new Date(d.generatedAt).toLocaleString()} · data cached 5 min`;
+  $('status').style.display = 'none';
+  $('content').style.display = 'block';
+}
+
+loadLocations().then(() => load(0));
+</script>
+</body>
+</html>
