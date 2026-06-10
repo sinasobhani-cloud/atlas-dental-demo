@@ -115,6 +115,18 @@
   .roi .out b { font-size: 23px; color: var(--accent); display: block; }
   .vrec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   .vrec .vh { background: var(--good-soft); color: var(--good); font-weight: 700; padding: 10px 16px; font-size: 13px; display: flex; justify-content: space-between; }
+  /* working session */
+  .q { display: flex; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--line); align-items: flex-start; }
+  .q:last-child { border-bottom: none; }
+  .q input[type=checkbox] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
+  .q.done .qt { text-decoration: line-through; color: var(--muted); }
+  .q .qt { font-size: 13.5px; flex: 1; }
+  .q .qnote { width: 270px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; font-size: 12px; flex-shrink: 0; }
+  .flow { display: flex; flex-direction: column; padding: 18px; }
+  .fbox { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: #fff; border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+  .fbox b { display: block; font-size: 13.5px; }
+  .farrow { text-align: center; color: var(--muted); padding: 3px 0; font-size: 14px; }
+  .codechain { background: #0f1c26; color: #9fdcef; border-radius: 12px; padding: 16px 18px; font: 12.5px/1.8 ui-monospace, Menlo, Consolas, monospace; overflow-x: auto; margin: 0 18px 18px; white-space: pre; }
   #status { padding: 70px; text-align: center; color: var(--muted); width: 100%; }
   .spinner { width: 26px; height: 26px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 99px; margin: 0 auto 14px; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -136,6 +148,9 @@
   <a data-page="verify"><span class="ico">✓</span> Verification <span class="soon">DEMO</span></a>
   <a data-page="chat"><span class="ico">✉</span> Chat <span class="soon">PREVIEW</span></a>
   <a data-page="agents"><span class="ico">◉</span> AI Agents <span class="soon">PREVIEW</span></a>
+  <div class="group">Working Session</div>
+  <a data-page="questions"><span class="ico">?</span> Open Questions</a>
+  <a data-page="how"><span class="ico">⛁</span> How It Works</a>
   <div class="group">Admin</div>
   <a data-page="settings"><span class="ico">⚙</span> Settings</a>
   <div class="foot">v0.3 demo · Open Dental test office · no PHI</div>
@@ -260,6 +275,71 @@
       <div><b>Voice &amp; outreach agents</b> from the Atlas platform (ElevenLabs + call workflows), retargeted to dental. Agents go live against this practice's data in v0.4.</div>
     </div>
     <div class="agents" id="agentCards"></div>
+  </div>
+
+  <!-- ============ OPEN QUESTIONS ============ -->
+  <div class="page hidden" id="page-questions">
+    <div class="preview-banner"><span class="tag" id="qProgress">0 / 0</span>
+      <div><b>Decisions to work through</b> — with Enayat &amp; Hovik, and internally. Check items off and add notes; everything saves in this browser so you can work the list across sessions.</div>
+    </div>
+    <div id="qWrap"></div>
+  </div>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <div class="page hidden" id="page-how">
+    <section class="card">
+      <h2>What's live right now vs. what's next</h2>
+      <table>
+        <thead><tr><th>Layer</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><b>Open Dental read integration</b></td><td><span class="pill ok">LIVE in this demo</span></td><td>Every number on Dashboard, Schedule, Patients, Follow-Up, and Recall is fetched from Open Dental's API in real time (their public test office — no PHI). Same code works against a real office with its API key.</td></tr>
+          <tr><td><b>Agent behavior</b></td><td><span class="pill warn">SIMULATED</span></td><td>Lead Pipeline and Verification screens replay scripted runs of the exact designed call/SMS flows. The voice stack (Twilio + ElevenLabs) already exists in Atlas-Backend from the auto glass product.</td></tr>
+          <tr><td><b>Production build (v0.4)</b></td><td><span class="pill neutral">NEXT</span></td><td>Postgres sync layer, real SMS/voice with consent gating, TMHP 270/271, supervised agent calls per the autonomy ladder.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>The Open Dental data chain <span class="note">every endpoint verified against the live API</span></h2>
+      <div style="padding:14px 18px" class="sub">One Open Dental database per location, one API key per office. We poll (Open Dental has no webhooks) using timestamp cursors. The agent's entire "context pack" for a verification call is assembled from data the practice already maintains — including <b>which phone number to dial</b>:</div>
+      <div class="codechain">appointments (T+1..T+3)        → AptNum, PatNum, AptDateTime, ProvNum
+  └─ patients/{PatNum}         → name, DOB, phone
+  └─ procedurelogs?AptNum      → planned procedure codes → question template
+  └─ providers/{ProvNum}       → NationalProvID (NPI)
+  └─ patplans?PatNum           → primary/secondary → InsSubNum
+       └─ inssubs/{InsSubNum}  → SubscriberID  ← the Medicaid member ID
+            └─ insplans        → CarrierNum, GroupNum
+                 └─ carriers   → CarrierName, Phone ← number we dial, ElectID ← EDI payer ID</div>
+      <div style="padding:0 18px 16px" class="sub">Writes are minimal by design: the only thing the platform ever writes back is a <b>new appointment</b> when a patient books — everything else is read-only. Conversion detection (lead → booked) works by watching for new appointments whose phone matches a lead.</div>
+    </section>
+
+    <section class="card">
+      <h2>Verification waterfall <span class="note">cheapest channel first — the AI call is the last resort, not the headline</span></h2>
+      <div class="flow">
+        <div class="fbox"><b>1 · TMHP 270/271 (EDI)</b>Eligible this month? Which DMO (MCNA / DentaQuest / UHC)? Seconds, structured, near-free. Resolves most checks.</div>
+        <div class="farrow">↓ gaps remain</div>
+        <div class="fbox"><b>2 · DMO portal automation</b>Benefits, frequency limits, service history, prior-auth flags — richer than the 271.</div>
+        <div class="farrow">↓ still missing fields</div>
+        <div class="fbox"><b>3a · AI call — TMHP AIS IVR (800-925-9126)</b>Pure keypad navigation, no human on the line. The safe proving ground for the calling stack.</div>
+        <div class="farrow">↓ benefits detail needed</div>
+        <div class="fbox"><b>3b · AI call — DMO provider line</b>IVR + hold (agent eats this), then rep conversation per the decision tree. Human takeover one click away at all times.</div>
+        <div class="farrow">↓</div>
+        <div class="fbox"><b>Output · VerificationRecord</b>Per-code coverage, frequencies, history dates, PA flags, reference number — published to tomorrow's schedule, or routed to the review queue if confidence is low.</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>The autonomy ladder <span class="note">per payer — promoted only on measured accuracy</span></h2>
+      <table>
+        <thead><tr><th>Level</th><th>Agent does</th><th>Human does</th><th>Promotion gate</th></tr></thead>
+        <tbody>
+          <tr><td><b>L1 · Hold-for-me</b></td><td>Dials, navigates IVR, enters NPI/member ID, survives hold; alerts human the instant a rep answers</td><td>The 3-minute rep conversation</td><td>Starting level for every payer — rep never talks to an AI</td></tr>
+          <tr><td><b>L2 · Supervised</b></td><td>Full rep conversation, live-monitored</td><td>Watches console (1 : 5–10 calls), one-click barge-in</td><td>≥95% extraction accuracy over 50 shadowed calls</td></tr>
+          <tr><td><b>L3 · Autonomous</b></td><td>Everything</td><td>Review queue only</td><td>≥98% accuracy over 100 calls, takeover &lt;5%</td></tr>
+        </tbody>
+      </table>
+      <div style="padding:14px 18px" class="sub">Full detail — call state machine (~40 states), takeover triggers, hard rules, fine-tuning loop — lives in the repo: <b>docs/verification-call-playbook.md</b> and <b>docs/agent-decision-tree.md</b>. The front-desk call-logging sheet (<b>docs/call-logging-sheet.md</b>) turns 2 weeks of real calls into the payer scripts.</div>
+    </section>
   </div>
 
   <div class="page hidden" id="page-settings">
@@ -608,6 +688,79 @@ function renderChat() {
     <div class="ai-suggest"><b>AI suggested reply</b><br>"We have 1:30 PM or 3:00 PM open Thursday with Dr. Albert. Reply 1 or 2 and you're booked — confirmation sent right away."<div class="sub" style="margin-top:6px">In v0.4: one click sends via your Twilio number and books the slot in Open Dental.</div></div>` : '';
 }
 
+// ===== Open Questions (persists in localStorage) =====
+const QUESTIONS = [
+  ['For Enayat & Hovik — practice data', [
+    'Do both offices run Open Dental today, with the eConnector service running?',
+    'Patient mix per DMO (MCNA / DentaQuest / UHC) at each location?',
+    'How many new-patient + pricing calls per week, per office?',
+    'What % of Medicaid patients have a member ID (SubscriberID) entered in Open Dental?',
+    'Current denial / write-off rate from eligibility misses (the ROI baseline)?',
+    'Who staffs the human review queue + takeover console day-to-day?',
+    'Front desk: complete 2 weeks of call-logging sheets (10+ calls per DMO)',
+  ]],
+  ['Business & partnership', [
+    'Equity, vesting, and IP terms — papered before the platform ships',
+    'Separate legal entity for the dental product (PHI liability, IP home)?',
+    'Delivery model: software subscription vs done-for-you service?',
+    'Pilot success criteria agreed in writing (e.g., X agent bookings/mo, 95% verification coverage)',
+    'Pricing hypothesis to test during pilot (per location / per verification / % of recovered revenue)?',
+  ]],
+  ['Verification agent decisions', [
+    'Which DMO do we script first (largest patient share)?',
+    'Caller identity & disclosure script — approve exact wording',
+    'Max hold budget per call (cost ceiling) and retry windows',
+    'Extraction confidence threshold for auto-publish vs review queue',
+    'Portal automation vs phone call priority, per payer',
+    'Sign off on autonomy ladder gates (L1 → L2 → L3 promotion criteria)',
+  ]],
+  ['Follow-up agent decisions', [
+    'Approve cadence: number of touches, timing, monthly reactivation count',
+    'Consent capture script ("can we text you?") — approve exact wording',
+    'Approved answers list: what can the agent say about pricing over SMS?',
+    'Which providers / operatories can the agent book into directly?',
+    'Escalation rules: what always goes to a human (clinical questions, complaints)?',
+  ]],
+  ['Compliance & infrastructure (start now — weeks of lead time)', [
+    'BAAs: hosting, Twilio, ElevenLabs (enterprise tier?), OpenAI',
+    'A2P 10DLC brand + campaign registration for SMS',
+    'TMHP EDI / clearinghouse enrollment for 270/271 (trading partner agreement)',
+    'Open Dental Developer Portal access (vendor.relations@opendental.com)',
+    'Call recording & disclosure policy (TX one-party consent, reps still get disclosure)',
+    'PHI-free logging + encryption-at-rest checklist before the first real office connects',
+  ]],
+];
+function qSave(id, done, note) {
+  const cur = JSON.parse(localStorage.getItem(id) || '{}');
+  if (done !== null) cur.done = done;
+  if (note !== null) cur.note = note;
+  localStorage.setItem(id, JSON.stringify(cur));
+  document.getElementById(id + '_row').classList.toggle('done', !!cur.done);
+  updateQProgress();
+}
+function updateQProgress() {
+  let total = 0, done = 0;
+  QUESTIONS.forEach(([g, qs], gi) => qs.forEach((q, qi) => {
+    total++;
+    if (JSON.parse(localStorage.getItem(`q_${gi}_${qi}`) || '{}').done) done++;
+  }));
+  $('qProgress').textContent = `${done} / ${total} resolved`;
+}
+function renderQuestions() {
+  $('qWrap').innerHTML = QUESTIONS.map(([g, qs], gi) =>
+    `<section class="card"><h2>${g} <span class="badge">${qs.length}</span></h2>` +
+    qs.map((q, qi) => {
+      const id = `q_${gi}_${qi}`;
+      const saved = JSON.parse(localStorage.getItem(id) || '{}');
+      return `<div class="q ${saved.done ? 'done' : ''}" id="${id}_row">
+        <input type="checkbox" ${saved.done ? 'checked' : ''} onchange="qSave('${id}', this.checked, null)">
+        <div class="qt">${q}</div>
+        <input class="qnote" placeholder="notes / answer…" value="${esc(saved.note || '')}" onchange="qSave('${id}', null, this.value)">
+      </div>`;
+    }).join('') + '</section>').join('');
+  updateQProgress();
+}
+
 // ===== Router =====
 const titles = {
   dashboard: ['Dashboard', 'Cross-location overview'],
@@ -617,6 +770,8 @@ const titles = {
   recall: ['Recall', 'Hygiene reactivation'],
   pipeline: ['Lead Pipeline', 'Follow-Up Agent — simulated demo'],
   verify: ['Verification', 'Medicaid Verification Agent — simulated demo'],
+  questions: ['Open Questions', 'Decisions to work through — saves in this browser'],
+  how: ['How It Works', 'Open Dental integration & agent architecture'],
   chat: ['Chat', 'Patient messaging — preview'],
   agents: ['AI Agents', 'Voice & outreach automation'],
   settings: ['Settings', 'Locations & compliance'],
@@ -655,6 +810,7 @@ $('playCall').addEventListener('click', playVerificationCall);
   renderVerify();
   renderAgents();
   renderChat();
+  renderQuestions();
   $('status').classList.add('hidden');
   $('page-dashboard').classList.remove('hidden');
 })();
