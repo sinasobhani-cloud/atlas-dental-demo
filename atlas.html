@@ -115,6 +115,42 @@
   .roi .out b { font-size: 23px; color: var(--accent); display: block; }
   .vrec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   .vrec .vh { background: var(--good-soft); color: var(--good); font-weight: 700; padding: 10px 16px; font-size: 13px; display: flex; justify-content: space-between; }
+  /* agent config (mirrors Atlas CRM) */
+  .setupbar { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 18px; }
+  .cfgwrap { display: grid; grid-template-columns: 1fr 330px; gap: 18px; align-items: start; }
+  .cfghead { display: flex; align-items: center; margin-bottom: 16px; }
+  .cfghead .back { color: var(--muted); cursor: pointer; font-size: 13.5px; }
+  .cfghead .back:hover { color: var(--accent); }
+  .cfghead .save { margin-left: auto; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 650; margin-bottom: 6px; }
+  .field label .req { color: var(--bad); }
+  .field input[type=text], .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; font-size: 13.5px; font-family: inherit; background: #fff; }
+  .field textarea.prompt { min-height: 320px; line-height: 1.55; font-size: 13px; }
+  .fieldrow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .rail section.card { margin-bottom: 14px; }
+  .rail h3 { font-size: 13.5px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .rail h3 .sub2 { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .action-row { display: flex; align-items: center; gap: 9px; padding: 9px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .action-row:last-child { border-bottom: none; }
+  .action-row .tgl { margin-left: auto; width: 30px; height: 17px; border-radius: 99px; background: var(--good); position: relative; opacity: 0.8; flex-shrink: 0; }
+  .action-row .tgl::after { content: ''; position: absolute; width: 13px; height: 13px; border-radius: 99px; background: #fff; top: 2px; right: 2px; }
+  .action-row .tgl.off { background: #cbd5e1; }
+  .action-row .tgl.off::after { right: auto; left: 2px; }
+  .kchip { display: inline-block; background: var(--accent-soft); color: var(--accent-ink); border-radius: 8px; padding: 4px 10px; font-size: 12px; margin: 0 6px 6px 0; }
+  .rail .pad { padding: 12px 16px; }
+  .rail .mini { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; margin: 4px 0; }
+  .agentlist .agent { cursor: pointer; }
+  .agentlist .agent:hover { border-color: var(--accent); box-shadow: 0 1px 8px rgba(14,116,144,0.12); }
+  /* chat CRM */
+  .chat-tabs { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .chat-tabs span { font-size: 12.5px; padding: 4px 12px; border-radius: 99px; background: #eef2f6; color: var(--muted); font-weight: 600; }
+  .chat-tabs span.on { background: var(--accent); color: #fff; }
+  .composer { border-top: 1px solid var(--line); padding: 10px 14px; background: #fff; }
+  .composer .qr { margin-bottom: 8px; }
+  .composer .qr span { display: inline-block; border: 1px solid var(--line); border-radius: 99px; padding: 3px 11px; font-size: 12px; color: var(--accent-ink); margin-right: 6px; cursor: default; background: var(--accent-soft); }
+  .composer .row2 { display: flex; gap: 10px; }
+  .composer textarea { flex: 1; border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; font-size: 13.5px; resize: none; height: 42px; font-family: inherit; }
   /* working session */
   .q { display: flex; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--line); align-items: flex-start; }
   .q:last-child { border-bottom: none; }
@@ -260,21 +296,79 @@
 
   <div class="page hidden" id="page-chat">
     <div class="preview-banner"><span class="tag">PREVIEW</span>
-      <div><b>Two-way patient SMS</b> with AI reply suggestions — powered by the Atlas comms stack (Twilio). Sample conversations; connects to your numbers in v0.4.</div>
+      <div><b>Two-way patient SMS</b> with AI reply suggestions and quick responses — same comms stack as the Atlas Auto Glass CRM. Sending goes live in v0.4 on your Twilio numbers.</div>
     </div>
     <section class="card">
+      <div class="chat-tabs"><span class="on">Open · 4</span><span>Assigned to me</span><span>Agent-handled</span><span>Closed</span></div>
       <div class="chatwrap">
         <div class="convs" id="convList"></div>
-        <div class="thread" id="thread"></div>
+        <div style="display:flex;flex-direction:column;min-height:480px">
+          <div class="thread" id="thread" style="flex:1"></div>
+          <div class="composer">
+            <div class="qr"><span>+ Insurance we accept</span><span>+ Covered cleaning info</span><span>+ Directions</span><span>+ Booking link</span></div>
+            <div class="row2"><textarea placeholder="Type a message… (sending goes live in v0.4)"></textarea><button class="playbtn" disabled>Send</button></div>
+          </div>
+        </div>
       </div>
     </section>
   </div>
 
   <div class="page hidden" id="page-agents">
     <div class="preview-banner"><span class="tag">PREVIEW</span>
-      <div><b>Voice &amp; outreach agents</b> from the Atlas platform (ElevenLabs + call workflows), retargeted to dental. Agents go live against this practice's data in v0.4.</div>
+      <div><b>Same agent platform as Atlas Auto Glass</b> — voices, system prompts, actions, knowledge base, call settings — retargeted to dental. <b>Click an agent to open its configuration.</b></div>
     </div>
-    <div class="agents" id="agentCards"></div>
+    <div class="agents agentlist" id="agentCards"></div>
+  </div>
+
+  <!-- ============ AGENT CONFIG (mirrors Atlas CRM) ============ -->
+  <div class="page hidden" id="page-agentconfig">
+    <div class="cfghead">
+      <span class="back" id="cfgBack">‹ Back to agents</span>
+      <button class="playbtn save" id="cfgSave">Save changes</button>
+    </div>
+    <div class="setupbar">⚠ <b>Setup mode.</b> Enable AI calling to allow this agent to start answering calls — wires to your Twilio numbers in v0.4.</div>
+    <div class="cfgwrap">
+      <div>
+        <section class="card" style="padding:18px">
+          <div class="field"><label>Agent Name <span class="req">*</span></label><input type="text" id="cfgName"></div>
+          <div class="field"><label>Short Description</label><input type="text" id="cfgDesc"></div>
+          <div class="fieldrow">
+            <div class="field"><label>Voice</label>
+              <select id="cfgVoice">
+                <option>Riley — Warm Professional · En, American, Female</option>
+                <option>Will — Relaxed Optimist · En, American, Male</option>
+                <option>Maya — Calm Clear · En, American, Female</option>
+                <option>Sam — Neutral Efficient · En, American, Male</option>
+              </select>
+              <div class="sub" style="margin-top:5px">▷ Play preview</div>
+            </div>
+            <div class="field"><label>Language</label>
+              <select id="cfgLang"><option>English</option><option>Spanish</option><option>English + Spanish (auto-detect)</option></select>
+            </div>
+          </div>
+          <div class="field"><label>System prompt</label><textarea class="prompt" id="cfgPrompt"></textarea></div>
+        </section>
+      </div>
+      <div class="rail">
+        <section class="card"><h3>Knowledge Base<span class="sub2">Connect knowledge sources for your agent</span></h3>
+          <div class="pad"><span class="kchip">Practice info &amp; hours</span><span class="kchip">Accepted plans (MCNA · DentaQuest · UHC)</span><span class="kchip">Approved pricing answers</span><span class="kchip">agent-decision-tree.md</span></div>
+        </section>
+        <section class="card"><h3>Actions<span class="sub2">Configure actions your agent can perform</span></h3>
+          <div id="cfgActions"></div>
+        </section>
+        <section class="card"><h3>Call settings<span class="sub2">Duration and silence handling</span></h3>
+          <div class="pad">
+            <label class="sub">Maximum call time (sec)</label><input class="mini" id="cfgMax">
+            <div class="sub" id="cfgMaxNote" style="margin-bottom:10px"></div>
+            <label class="sub">End call after silence (sec)</label><input class="mini" id="cfgSilence">
+            <div class="sub" id="cfgSilenceNote"></div>
+          </div>
+        </section>
+        <section class="card"><h3>Transcription<span class="sub2">Help the agent hear domain words correctly</span></h3>
+          <div class="pad"><span class="kchip">MCNA</span><span class="kchip">DentaQuest</span><span class="kchip">TMHP</span><span class="kchip">prophy</span><span class="kchip">D1120</span><span class="kchip">D0272</span><span class="kchip">prior auth</span><span class="kchip">NPI</span><span class="kchip">bitewings</span></div>
+        </section>
+      </div>
+    </div>
   </div>
 
   <!-- ============ OPEN QUESTIONS ============ -->
@@ -647,31 +741,112 @@ function showVrec() {
     <div class="sub" style="margin-top:8px">Front desk sees this on tomorrow's schedule before the patient walks in. The bitewings flag alone prevents a write-off.</div>`;
 }
 
-// ===== Preview screens =====
+// ===== Agents (mirrors the Atlas Auto Glass agent platform) =====
+const AGENT_CFGS = [
+  { icon: '💬', name: 'Riley', title: 'Follow-Up Agent', on: true, voiceIdx: 0,
+    desc2: 'Your follow-up agent from Atlas Dental — works every lead until they schedule',
+    max: 600, silence: 15,
+    maxNote: 'Range 30–600 · Atlas platform default — fine for patient calls.',
+    silNote: 'Range 5–30 · patients pause briefly; 15s is safe.',
+    actions: [['Transfer To Human', true], ['SMS send', true], ['Check open slots (Open Dental)', true], ['Book appointment (Open Dental)', true]],
+    prompt: `You are Riley. When anyone asks for your name, always answer "Riley". Never refer to yourself as "AI", "AI agent", or "AI assistant" — your name is Riley.
+You handle follow-up calls and texts for Atlas Dental. Your job is to get patients scheduled.
+
+CALL FLOW FOR TREATMENT FOLLOW-UP
+Collect one question at a time. Skip any question already answered:
+1. "Hi, may I speak with {patient first name}?"
+2. "Dr. {provider} recommended {treatment} at your last visit — we'd love to get that scheduled for you."
+3. If Medicaid: "Good news — with {plan name} this is covered, $0 out of pocket."
+4. Offer exactly two open slots from the schedule (use Check open slots).
+5. Confirm day, time, and provider, then use Book appointment.
+
+CALL FLOW FOR RECALL / NEW LEADS
+Same pattern: identify → reason for call → covered-cost reassurance if Medicaid → two slots → book.
+
+RULES
+- Never give clinical advice. Any clinical question → Transfer To Human.
+- Cost questions: answer ONLY from the Knowledge Base approved pricing list.
+- "Stop" / "not interested" → confirm politely, mark opted out, end the call.
+- On SMS always include opt-out ("Reply STOP to opt out"). Quiet hours 8am–8pm.
+- Never argue. If the person is upset → Transfer To Human.` },
+  { icon: '🛡', name: 'Verification Assistant', title: 'Medicaid Verification Agent', on: true, voiceIdx: 3,
+    desc2: 'Calls TMHP AIS and DMO provider lines to verify eligibility & benefits',
+    max: 3600, silence: 120,
+    maxNote: '⚠ Raised from the Atlas 600s cap — MCNA/DentaQuest hold queues can exceed 40 minutes.',
+    silNote: '⚠ Hold music has long silent gaps — pair with hold-detection so the silence timer pauses while on hold.',
+    actions: [['Transfer To Human (barge-in)', true], ['DTMF keypad entry', true], ['Hold detection / wait', true], ['Write VerificationRecord', true], ['SMS send', false]],
+    prompt: `You are an automated verification assistant calling payers on behalf of Atlas Dental, NPI {npi}. When a human representative answers, always disclose first: "This is an automated assistant calling on behalf of Atlas Dental, on a recorded line."
+
+IVR PHASE
+Navigate using DTMF keypad entry per the payer's script (versioned config). Enter NPI / member ID / DOB / date of service when prompted. Wait through hold queues — never hang up before the maximum call time. If the IVR reads eligibility back, capture it.
+
+REP AUTHENTICATION
+Answer ONLY from the context pack: practice name, NPI, TIN, address, callback number, member ID, member name, member DOB, date of service. Any question not on this list → Transfer To Human.
+
+QUESTIONS — ask only fields_still_needed from the context pack:
+- Per procedure code: covered? frequency limit? date last paid?
+- Prior authorization required?
+- Any other insurance / TPL on file?
+- ALWAYS end with: "May I get a reference number?"
+
+RULES
+- Never guess member data. Never invent dates.
+- Ambiguous answer → one clarifying question, then flag the field and move on.
+- Rep refuses an automated caller → offer a human ("One moment please", max 30s wait), otherwise thank them and end (logged as callback task).
+- Claims disputes, appeals, clinical judgment → always Transfer To Human.
+- Every call ends in exactly one terminal state.` },
+  { icon: '📞', name: 'Maya', title: 'Reception Agent', on: false, voiceIdx: 2,
+    desc2: 'Answers every inbound call 24/7 — books directly into Open Dental',
+    max: 600, silence: 15,
+    maxNote: 'Range 30–600 · Atlas platform default.',
+    silNote: 'Range 5–30.',
+    actions: [['Transfer To Human', true], ['SMS send', true], ['Check open slots (Open Dental)', false], ['Book appointment (Open Dental)', false], ['Create lead in pipeline', true]],
+    prompt: `You are Maya. When anyone asks for your name, always answer "Maya". You answer inbound calls for Atlas Dental: greet, identify the caller's need, book/reschedule/confirm appointments, answer coverage questions from the Knowledge Base, and create a lead for every caller who doesn't book. Clinical questions or upset callers → Transfer To Human. (Full prompt finalized in v0.4.)` },
+  { icon: '🔁', name: 'Riley', title: 'Recall & Reactivation Agent', on: false, voiceIdx: 0,
+    desc2: 'Reaches patients past their hygiene recall date and fills hygiene gaps',
+    max: 600, silence: 15,
+    maxNote: 'Range 30–600 · Atlas platform default.',
+    silNote: 'Range 5–30.',
+    actions: [['Transfer To Human', true], ['SMS send', true], ['Check open slots (Open Dental)', false], ['Book appointment (Open Dental)', false]],
+    prompt: `You are Riley, calling patients of Atlas Dental who are past due for their hygiene visit. Same persona and rules as the Follow-Up Agent; the offer is a covered cleaning + exam. (Full prompt finalized in v0.4.)` },
+];
+let currentAgent = 0;
+
 function renderAgents() {
-  const u = D.unscheduled[0];
-  const uName = u && D.patByNum.get(u.patNum) ? nameOf(D.patByNum.get(u.patNum)) : 'top patient';
-  const agents = [
-    { icon: '💬', name: 'Follow-Up Agent', on: true,
-      desc: `Works every lead — price shoppers, unscheduled treatment (e.g., ${esc(uName)}, ${u ? usd(u.total) : ''}), lapsed recall — until they book or opt out. See Lead Pipeline for the full demo.`,
-      s1: ['Queue today', D.unscheduled.length + D.overdue.length], s2: ['Pipeline value', usd(D.unscheduledValue)], s3: ['Channel', 'SMS → Voice'] },
-    { icon: '🛡', name: 'Medicaid Verification Agent', on: true,
-      desc: 'Verifies tomorrow\'s schedule nightly: TMHP 270/271 → DMO portal → AI phone call (AIS IVR + MCNA/DentaQuest/UHC reps). See Verification for the call demo.',
-      s1: ['Coverage', '38/38'], s2: ['By AI call', '6'], s3: ['Time saved', '4.2 h/day'] },
-    { icon: '📞', name: 'Reception Agent', on: false,
-      desc: 'Answers every inbound call 24/7 — books, reschedules, confirms in Open Dental, and feeds every non-booking caller into the Follow-Up Agent pipeline.',
-      s1: ['Calls handled', '—'], s2: ['Booked', '—'], s3: ['Avg. answer', '< 2 rings'] },
-    { icon: '🔁', name: 'Recall & Reactivation Agent', on: false,
-      desc: `Reaches patients past their hygiene recall date — ${D.overdue.length} currently overdue at this office — and fills hygiene gaps in the schedule.`,
-      s1: ['Overdue now', D.overdue.length], s2: ['Re-booked', '—'], s3: ['Cadence', '3-touch'] },
-  ];
-  $('agentCards').innerHTML = agents.map((a) => `
-    <div class="agent">
-      <div class="head"><div class="orb">${a.icon}</div><div><h3>${a.name}</h3><span class="pill ${a.on ? 'ok' : 'neutral'}">${a.on ? 'Demo available' : 'Planned'}</span></div></div>
-      <div class="desc">${a.desc}</div>
-      <div class="stats"><div><b>${a.s1[1]}</b>${a.s1[0]}</div><div><b>${a.s2[1]}</b>${a.s2[0]}</div><div><b>${a.s3[1]}</b>${a.s3[0]}</div></div>
-      <div class="row"><span class="sub">Goes live in v0.4 (Atlas voice stack)</span><div class="switch ${a.on ? 'on' : ''}"></div></div>
+  $('agentCards').innerHTML = AGENT_CFGS.map((a, i) => `
+    <div class="agent" onclick="openAgent(${i})">
+      <div class="head"><div class="orb">${a.icon}</div><div><h3>${a.title}</h3><span class="pill ${a.on ? 'ok' : 'neutral'}">${a.on ? 'Configured · setup mode' : 'Planned'}</span></div></div>
+      <div class="desc">${esc(a.desc2)}.</div>
+      <div class="row"><span class="sub">Agent: ${esc(a.name)} · click to configure</span><div class="switch ${a.on ? 'on' : ''}"></div></div>
     </div>`).join('');
+}
+
+function openAgent(i) {
+  currentAgent = i;
+  const saved = JSON.parse(localStorage.getItem('agentcfg_' + i) || 'null') || {};
+  const a = { ...AGENT_CFGS[i], ...saved };
+  $('cfgName').value = a.name;
+  $('cfgDesc').value = a.desc2;
+  $('cfgVoice').selectedIndex = a.voiceIdx;
+  $('cfgPrompt').value = a.prompt;
+  $('cfgMax').value = a.max;
+  $('cfgSilence').value = a.silence;
+  $('cfgMaxNote').textContent = AGENT_CFGS[i].maxNote;
+  $('cfgSilenceNote').textContent = AGENT_CFGS[i].silNote;
+  $('cfgActions').innerHTML = AGENT_CFGS[i].actions.map(([label, on]) =>
+    `<div class="action-row">${esc(label)}<div class="tgl ${on ? '' : 'off'}"></div></div>`).join('') +
+    `<div class="action-row" style="color:var(--accent);font-weight:600">+ New Action</div>`;
+  showPage('agentconfig');
+}
+
+function saveAgent() {
+  localStorage.setItem('agentcfg_' + currentAgent, JSON.stringify({
+    name: $('cfgName').value, desc2: $('cfgDesc').value, prompt: $('cfgPrompt').value,
+    voiceIdx: $('cfgVoice').selectedIndex, max: $('cfgMax').value, silence: $('cfgSilence').value,
+  }));
+  const b = $('cfgSave');
+  b.textContent = '✓ Saved (this browser)';
+  setTimeout(() => { b.textContent = 'Save changes'; }, 2200);
 }
 
 function renderChat() {
@@ -721,6 +896,16 @@ const QUESTIONS = [
     'Approved answers list: what can the agent say about pricing over SMS?',
     'Which providers / operatories can the agent book into directly?',
     'Escalation rules: what always goes to a human (clinical questions, complaints)?',
+  ]],
+  ['Porting the Atlas agent platform (findings from the auto glass CRM)', [
+    'Raise Maximum call time for payer calls — Atlas caps at 600s; MCNA/DentaQuest holds can exceed 40 min',
+    'Silence handling: end-after-silence (5–30s) would hang up during hold queues — add hold-music detection that pauses the timer',
+    'New action type: DTMF keypad entry (IVR navigation for payer calls)',
+    'New action types: Check open slots + Book appointment in Open Dental (replaces auto glass job booking)',
+    'Transfer To Human → extend into conference barge-in (takeover console) per the playbook',
+    'Agent persona names + voices for dental (Riley / Maya / Sam?) — approve with the dentists',
+    'Knowledge Base sources for dental: accepted plans, approved pricing answers, practice info — who maintains them?',
+    'Transcription custom vocabulary: payer names + dental codes (MCNA, TMHP, prophy, D1120, prior auth…)',
   ]],
   ['Compliance & infrastructure (start now — weeks of lead time)', [
     'BAAs: hosting, Twilio, ElevenLabs (enterprise tier?), OpenAI',
@@ -796,24 +981,26 @@ const titles = {
   questions: ['Open Questions', 'Decisions to work through — saves in this browser'],
   how: ['How It Works', 'Open Dental integration & agent architecture'],
   chat: ['Chat', 'Patient messaging — preview'],
-  agents: ['AI Agents', 'Voice & outreach automation'],
+  agents: ['AI Agents', 'Same platform as Atlas Auto Glass — click an agent to configure'],
+  agentconfig: ['Agent Configuration', 'Setup mode — goes live in v0.4'],
   settings: ['Settings', 'Locations & compliance'],
 };
+function showPage(page) {
+  document.querySelectorAll('nav a').forEach((x) => x.classList.toggle('active', x.dataset.page === page));
+  document.querySelectorAll('.page').forEach((p) => p.classList.add('hidden'));
+  $('page-' + page).classList.remove('hidden');
+  $('pageTitle').textContent = titles[page][0];
+  $('pageCrumb').textContent = titles[page][1];
+}
 document.querySelectorAll('nav a[data-page]').forEach((a) => {
-  a.onclick = () => {
-    document.querySelectorAll('nav a').forEach((x) => x.classList.remove('active'));
-    a.classList.add('active');
-    const page = a.dataset.page;
-    document.querySelectorAll('.page').forEach((p) => p.classList.add('hidden'));
-    $('page-' + page).classList.remove('hidden');
-    $('pageTitle').textContent = titles[page][0];
-    $('pageCrumb').textContent = titles[page][1];
-  };
+  a.onclick = () => showPage(a.dataset.page);
 });
 $('patientSearch').addEventListener('input', (e) => renderPatients(e.target.value));
 $('playLead').addEventListener('click', playLeadJourney);
 $('playCall').addEventListener('click', playVerificationCall);
 $('shareBtn').addEventListener('click', qExportLink);
+$('cfgBack').addEventListener('click', () => showPage('agents'));
+$('cfgSave').addEventListener('click', saveAgent);
 
 // ===== Init =====
 (async function init() {
