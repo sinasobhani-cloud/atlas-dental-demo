@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas Dental</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #ffffff; --ink: #18222e; --muted: #64748b;
+    --line: #e2e8f0; --accent: #0e7490; --accent-soft: #e0f2f7; --accent-ink: #0b5c73;
+    --good: #15803d; --good-soft: #ecfdf3; --warn: #b45309; --warn-soft: #fef6e7;
+    --bad: #b91c1c; --bad-soft: #feecec;
+    --side: #0f1c26; --side-ink: #9fb3c2;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 14.5px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); display: flex; min-height: 100vh; }
+  nav { width: 218px; background: var(--side); color: var(--side-ink); padding: 18px 12px; flex-shrink: 0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  nav .logo { color: #fff; font-size: 17px; font-weight: 750; padding: 4px 10px 16px; letter-spacing: -0.2px; }
+  nav .logo span { color: #34bcd9; }
+  nav .group { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px; padding: 14px 10px 6px; color: #5b7081; }
+  nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--side-ink); text-decoration: none; font-weight: 500; margin-bottom: 2px; cursor: pointer; }
+  nav a:hover { background: rgba(255,255,255,0.06); color: #dbe7ee; }
+  nav a.active { background: #134155; color: #fff; }
+  nav a .ico { width: 18px; text-align: center; opacity: 0.9; }
+  nav a .soon { margin-left: auto; font-size: 9.5px; background: #1d3a4a; color: #6ecbe0; padding: 1px 7px; border-radius: 99px; font-weight: 700; letter-spacing: 0.4px; }
+  nav .foot { margin-top: auto; padding: 10px; font-size: 11.5px; color: #5b7081; }
+  main { flex: 1; min-width: 0; }
+  .topbar { background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 26px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 5; }
+  .topbar h1 { font-size: 16.5px; font-weight: 700; }
+  .topbar .crumb { color: var(--muted); font-size: 13px; }
+  .topbar .right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .loc { padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--ink); background: #fff; }
+  .avatar { width: 30px; height: 30px; border-radius: 99px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; }
+  .page { padding: 22px 26px 60px; max-width: 1240px; }
+  .hidden { display: none !important; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 15px 17px; }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .kpi .value { font-size: 26px; font-weight: 750; margin-top: 3px; letter-spacing: -0.5px; }
+  .kpi .hint { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .kpi.money .value { color: var(--accent); }
+  .kpi.alert .value { color: var(--bad); }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  section.card > h2 { font-size: 14.5px; padding: 13px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  section.card > h2 .badge { background: var(--accent-soft); color: var(--accent-ink); font-size: 11.5px; padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+  section.card > h2 .note { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 400; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 8px 18px; border-bottom: 1px solid var(--line); background: #fafbfc; }
+  td { padding: 10px 18px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafcfd; }
+  .money { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .pill { display: inline-block; font-size: 11.5px; padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+  .pill.ok { background: var(--good-soft); color: var(--good); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.neutral { background: #eef2f6; color: var(--muted); }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .contact { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .empty { padding: 24px 18px; color: var(--muted); text-align: center; }
+  .daygroup { padding: 8px 18px; background: #f8fafc; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 12.5px; color: var(--accent-ink); }
+  .search { padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; width: 290px; font-size: 13.5px; }
+  .toolrow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .preview-banner { background: linear-gradient(90deg, #103445, #0e7490); color: #e8f8fc; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; font-size: 13.5px; }
+  .preview-banner b { color: #fff; }
+  .preview-banner .tag { background: rgba(255,255,255,0.18); padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+  .agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; }
+  .agent { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .agent .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .agent .orb { width: 38px; height: 38px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .agent h3 { font-size: 14.5px; }
+  .agent .desc { color: var(--muted); font-size: 13px; min-height: 56px; }
+  .agent .stats { display: flex; gap: 16px; margin: 12px 0; font-size: 12.5px; color: var(--muted); }
+  .agent .stats b { color: var(--ink); font-size: 15px; display: block; }
+  .agent .row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; }
+  .switch { width: 38px; height: 21px; border-radius: 99px; background: #cdd7e1; position: relative; opacity: 0.55; }
+  .switch::after { content: ''; position: absolute; width: 17px; height: 17px; border-radius: 99px; background: #fff; top: 2px; left: 2px; }
+  .switch.on { background: var(--good); opacity: 0.55; }
+  .switch.on::after { left: 19px; }
+  .chatwrap { display: grid; grid-template-columns: 300px 1fr; min-height: 480px; }
+  .convs { border-right: 1px solid var(--line); }
+  .conv { padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: default; }
+  .conv.active { background: var(--accent-soft); }
+  .conv .who { font-weight: 650; font-size: 13.5px; display: flex; justify-content: space-between; }
+  .conv .who time { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+  .conv .last { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .thread { padding: 18px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+  .bubble { max-width: 68%; padding: 9px 13px; border-radius: 14px; font-size: 13.5px; }
+  .bubble.in { background: #fff; border: 1px solid var(--line); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .bubble.out { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .bubble .meta { font-size: 10.5px; opacity: 0.65; margin-top: 4px; }
+  .sysline { text-align: center; color: var(--muted); font-size: 11.5px; padding: 2px 0; }
+  .ai-suggest { margin-top: auto; background: #fff; border: 1px dashed var(--accent); border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+  .ai-suggest b { color: var(--accent-ink); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  /* demo: pipeline */
+  .pipe { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .col { background: #eaeff4; border-radius: 12px; padding: 10px; }
+  .col h4 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 2px 6px 8px; display: flex; justify-content: space-between; }
+  .leadcard { background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 12.5px; }
+  .leadcard b { font-size: 13px; display: block; }
+  .leadcard .tag { font-size: 10.5px; color: var(--accent-ink); background: var(--accent-soft); border-radius: 99px; padding: 1px 7px; display: inline-block; margin-top: 4px; }
+  /* demo: transcript */
+  .transcript { background: #0f1c26; color: #cfe3ee; border-radius: 12px; padding: 16px 18px; font: 12.5px/1.75 ui-monospace, Menlo, Consolas, monospace; max-height: 430px; overflow-y: auto; }
+  .transcript .t-ivr { color: #8fb8cc; }
+  .transcript .t-agent { color: #6ee7b7; }
+  .transcript .t-rep { color: #fbd38d; }
+  .transcript .t-sys { color: #64748b; font-style: italic; }
+  .dtmf { background: #134155; color: #7dd3fc; padding: 0 6px; border-radius: 5px; font-weight: 700; }
+  .playbtn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .playbtn:disabled { opacity: 0.5; cursor: default; }
+  .roi { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 14px 18px; }
+  .roi label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 3px; }
+  .roi input { width: 95px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; font-size: 13.5px; }
+  .roi .out { margin-left: auto; text-align: right; }
+  .roi .out b { font-size: 23px; color: var(--accent); display: block; }
+  .vrec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .vrec .vh { background: var(--good-soft); color: var(--good); font-weight: 700; padding: 10px 16px; font-size: 13px; display: flex; justify-content: space-between; }
+  #status { padding: 70px; text-align: center; color: var(--muted); width: 100%; }
+  .spinner { width: 26px; height: 26px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 99px; margin: 0 auto 14px; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Atlas <span>Dental</span></div>
+  <div class="group">Practice</div>
+  <a data-page="dashboard" class="active"><span class="ico">▦</span> Dashboard</a>
+  <a data-page="schedule"><span class="ico">▤</span> Schedule</a>
+  <a data-page="patients"><span class="ico">☺</span> Patients</a>
+  <div class="group">Revenue</div>
+  <a data-page="followup"><span class="ico">$</span> Treatment Follow-Up</a>
+  <a data-page="recall"><span class="ico">↻</span> Recall</a>
+  <div class="group">Agents</div>
+  <a data-page="pipeline"><span class="ico">⇉</span> Lead Pipeline <span class="soon">DEMO</span></a>
+  <a data-page="verify"><span class="ico">✓</span> Verification <span class="soon">DEMO</span></a>
+  <a data-page="chat"><span class="ico">✉</span> Chat <span class="soon">PREVIEW</span></a>
+  <a data-page="agents"><span class="ico">◉</span> AI Agents <span class="soon">PREVIEW</span></a>
+  <div class="group">Admin</div>
+  <a data-page="settings"><span class="ico">⚙</span> Settings</a>
+  <div class="foot">v0.3 demo · Open Dental test office · no PHI</div>
+</nav>
+
+<main>
+  <div class="topbar">
+    <h1 id="pageTitle">Dashboard</h1>
+    <span class="crumb" id="pageCrumb">Cross-location overview</span>
+    <div class="right">
+      <select class="loc"><option>Open Dental Test Office</option><option disabled>+ Add location…</option></select>
+      <div class="avatar">AT</div>
+    </div>
+  </div>
+
+  <div id="status"><div class="spinner"></div>Connecting to Open Dental…</div>
+
+  <div class="page hidden" id="page-dashboard">
+    <div class="kpis" id="kpis"></div>
+    <section class="card">
+      <h2>Top Revenue Opportunities <span class="badge" id="unschedBadgeD"></span>
+        <span class="note">Highest-value patients with unscheduled treatment</span></h2>
+      <div id="dashTopTable"></div>
+    </section>
+    <section class="card">
+      <h2>Today &amp; Upcoming <span class="note">Next 14 days</span></h2>
+      <div id="dashApptTable"></div>
+    </section>
+  </div>
+
+  <div class="page hidden" id="page-schedule">
+    <section class="card">
+      <h2>Appointments <span class="badge" id="apptBadge"></span><span class="note">Next 14 days, all providers</span></h2>
+      <div id="scheduleTable"></div>
+    </section>
+  </div>
+
+  <div class="page hidden" id="page-patients">
+    <div class="toolrow">
+      <input class="search" id="patientSearch" placeholder="Search patients by name, phone, city…" />
+      <span class="sub" id="patientCount"></span>
+    </div>
+    <section class="card"><div id="patientsTable"></div></section>
+  </div>
+
+  <div class="page hidden" id="page-followup">
+    <div class="preview-banner"><span class="tag">LIVE DATA</span>
+      <div>The front desk's daily call list — <b>treatment-planned dollars with no appointment on the books</b>, ranked by value. The Follow-Up Agent works this list automatically (see Lead Pipeline).</div>
+    </div>
+    <section class="card">
+      <h2>Unscheduled Treatment <span class="badge" id="unschedBadge"></span></h2>
+      <div id="followupTable"></div>
+    </section>
+  </div>
+
+  <div class="page hidden" id="page-recall">
+    <section class="card">
+      <h2>Overdue Recall <span class="badge" id="recallBadge"></span>
+        <span class="note">Past due with nothing scheduled — hygiene reactivation list</span></h2>
+      <div id="recallTable"></div>
+    </section>
+  </div>
+
+  <!-- ============ LEAD PIPELINE (demo) ============ -->
+  <div class="page hidden" id="page-pipeline">
+    <div class="preview-banner"><span class="tag">SIMULATED</span>
+      <div><b>Follow-Up Agent</b> — every caller becomes a lead and is worked until they schedule or opt out. Volumes shown reflect a Medicaid-heavy office doing ~250 calls/week.</div>
+    </div>
+    <section class="card">
+      <h2>What this is worth <span class="note">put in your real numbers</span></h2>
+      <div class="roi">
+        <div><label>Calls / week</label><input id="roiCalls" type="number" value="250"></div>
+        <div><label>% that don't book</label><input id="roiMiss" type="number" value="35"></div>
+        <div><label>Agent recovery %</label><input id="roiRec" type="number" value="25"></div>
+        <div><label>Avg first-visit $</label><input id="roiVal" type="number" value="240"></div>
+        <div class="out"><b id="roiOut"></b><span class="sub">recovered revenue / month / location</span></div>
+      </div>
+    </section>
+    <div class="kpis" id="pipeKpis"></div>
+    <div class="pipe" id="pipeCols"></div>
+    <section class="card">
+      <h2>A lead's journey <span class="badge">walk-through</span>
+        <span class="note">from "just asking about price" to booked in Open Dental</span></h2>
+      <div style="padding:14px 18px"><button class="playbtn" id="playLead">▶ Play the journey</button></div>
+      <div class="thread" id="leadThread" style="min-height:80px"></div>
+    </section>
+  </div>
+
+  <!-- ============ VERIFICATION (demo) ============ -->
+  <div class="page hidden" id="page-verify">
+    <div class="preview-banner"><span class="tag">SIMULATED</span>
+      <div><b>Medicaid Verification Agent</b> — nightly, every appointment is verified through the cheapest channel first: TMHP 270/271 → DMO portal → AI phone call (TMHP AIS IVR, then DMO rep). Patients are real test-office records; payer responses are simulated.</div>
+    </div>
+    <div class="kpis" id="verKpis"></div>
+    <section class="card">
+      <h2>Tomorrow's schedule — verification queue <span class="note">Texas DMOs: MCNA · DentaQuest · UHC Dental</span></h2>
+      <div id="verTable"></div>
+    </section>
+    <section class="card">
+      <h2>Watch the agent make a call <span class="badge">IVR navigation + rep conversation</span>
+        <span class="note">this is the exact call flow, simulated</span></h2>
+      <div style="padding:14px 18px"><button class="playbtn" id="playCall">▶ Play verification call</button></div>
+      <div class="transcript" id="callBox" style="margin:0 18px 18px"><span class="t-sys">Press play to watch the agent verify benefits over the phone.</span></div>
+      <div id="vrec" style="padding:0 18px 18px"></div>
+    </section>
+  </div>
+
+  <div class="page hidden" id="page-chat">
+    <div class="preview-banner"><span class="tag">PREVIEW</span>
+      <div><b>Two-way patient SMS</b> with AI reply suggestions — powered by the Atlas comms stack (Twilio). Sample conversations; connects to your numbers in v0.4.</div>
+    </div>
+    <section class="card">
+      <div class="chatwrap">
+        <div class="convs" id="convList"></div>
+        <div class="thread" id="thread"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="page hidden" id="page-agents">
+    <div class="preview-banner"><span class="tag">PREVIEW</span>
+      <div><b>Voice &amp; outreach agents</b> from the Atlas platform (ElevenLabs + call workflows), retargeted to dental. Agents go live against this practice's data in v0.4.</div>
+    </div>
+    <div class="agents" id="agentCards"></div>
+  </div>
+
+  <div class="page hidden" id="page-settings">
+    <section class="card">
+      <h2>Locations</h2>
+      <div style="padding:16px 18px" class="sub">One Open Dental database per location. Add a location by generating a Customer API key in the Open Dental Developer Portal and entering it here. Currently connected: <b>Open Dental Test Office</b> (public demo database — no PHI).</div>
+    </section>
+    <section class="card">
+      <h2>Compliance checklist <span class="note">required before connecting a real office</span></h2>
+      <div style="padding:16px 18px; font-size:13.5px; line-height:2">
+        ☐ BAAs signed (hosting, Twilio, AI vendors)<br>
+        ☐ TCPA consent capture on first contact, instant STOP handling<br>
+        ☐ Authentication + role-based access (ported from Atlas RBAC)<br>
+        ☐ Audit logging on every PHI access · PHI-free server logs · TLS · encryption at rest
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+// ===== Open Dental client (public TEST credentials, no PHI) =====
+const BASE_URL = 'https://api.opendental.com/api/v1';
+const AUTH = 'ODFHIR NFF6i0KrXrxDkZHt/VzkmZEaUWOjnQX2z';
+const isNullDate = (s) => !s || s.startsWith('0001-01-01');
+const fmtDate = (d) => d.toISOString().slice(0, 10);
+
+async function odGet(path, params = {}) {
+  const url = new URL(`${BASE_URL}/${path}`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
+  const res = await fetch(url, { headers: { Authorization: AUTH } });
+  if (!res.ok) throw new Error(`Open Dental API ${res.status} on ${path}`);
+  return res.json();
+}
+async function odGetAll(path, params = {}) {
+  const out = [];
+  for (let p = 0; p < 10; p++) {
+    const b = await odGet(path, { ...params, Limit: 100, Offset: p * 100 });
+    out.push(...b);
+    if (b.length < 100) break;
+  }
+  return out;
+}
+
+// ===== Helpers =====
+const $ = (id) => document.getElementById(id);
+const usd = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const phoneOf = (p) => p.WirelessPhone || p.HmPhone || p.WkPhone || '';
+const nameOf = (p) => `${p.FName || ''} ${p.LName || ''}`.trim();
+function table(headers, rows, emptyMsg) {
+  if (!rows.length) return `<div class="empty">${emptyMsg}</div>`;
+  return `<table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+function kpiCard(label, value, hint, cls = '') {
+  return `<div class="kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`;
+}
+
+// ===== Data load =====
+const D = {};
+async function loadData() {
+  const today = new Date(), todayStr = fmtDate(today);
+  const in14 = fmtDate(new Date(today.getTime() + 14 * 86400000));
+  const [appointments, tpProcs, recalls, providers, patients] = await Promise.all([
+    odGetAll('appointments', { dateStart: todayStr, dateEnd: in14 }),
+    odGetAll('procedurelogs', { ProcStatus: 'TP' }),
+    odGetAll('recalls'),
+    odGetAll('providers'),
+    odGetAll('patients'),
+  ]);
+  const patByNum = new Map(patients.map((p) => [p.PatNum, p]));
+  const provByNum = new Map(providers.map((p) => [p.ProvNum, p]));
+  const scheduled = appointments.filter((a) => a.AptStatus === 'Scheduled')
+    .sort((a, b) => (a.AptDateTime < b.AptDateTime ? -1 : 1));
+  const hasFuture = new Set(scheduled.map((a) => a.PatNum));
+
+  const byPatient = new Map();
+  for (const proc of tpProcs) {
+    if (hasFuture.has(proc.PatNum)) continue;
+    const e = byPatient.get(proc.PatNum) || { patNum: proc.PatNum, total: 0, procedures: [], oldest: null };
+    e.total += parseFloat(proc.ProcFee || '0') * (proc.UnitQty || 1);
+    e.procedures.push({ code: proc.procCode, description: proc.descript });
+    const d = isNullDate(proc.DateTP) ? null : proc.DateTP;
+    if (d && (!e.oldest || d < e.oldest)) e.oldest = d;
+    byPatient.set(proc.PatNum, e);
+  }
+  const unscheduled = [...byPatient.values()].sort((a, b) => b.total - a.total);
+  const overdue = recalls.filter((r) =>
+    r.IsDisabled !== 'true' && !isNullDate(r.DateDue) && r.DateDue < todayStr && isNullDate(r.DateScheduled))
+    .sort((a, b) => (a.DateDue < b.DateDue ? -1 : 1));
+
+  Object.assign(D, { scheduled, unscheduled, overdue, patients, patByNum, provByNum,
+    unscheduledValue: unscheduled.reduce((s, e) => s + e.total, 0),
+    unconfirmed: scheduled.filter((a) => (a.confirmed || '') === 'Unconfirmed') });
+}
+
+// ===== Core renderers =====
+function renderDashboard() {
+  $('kpis').innerHTML =
+    kpiCard('Unscheduled Treatment', usd(D.unscheduledValue), `${D.unscheduled.length} patients · live from Open Dental`, 'money') +
+    kpiCard('Overdue Recall', D.overdue.length, 'patients past due', D.overdue.length ? 'alert' : '') +
+    kpiCard('Appointments', D.scheduled.length, 'next 14 days') +
+    kpiCard('Unconfirmed', D.unconfirmed.length, 'need confirmation', D.unconfirmed.length ? 'alert' : '') +
+    kpiCard('Active Patients', D.patients.filter((p) => p.PatStatus === 'Patient').length, 'in practice database');
+  $('unschedBadgeD').textContent = usd(D.unscheduledValue);
+  $('dashTopTable').innerHTML = followupRows(D.unscheduled.slice(0, 5));
+  $('dashApptTable').innerHTML = scheduleRows(D.scheduled.slice(0, 8), false);
+}
+
+function followupRows(list) {
+  return table(['Patient', 'Contact', 'Treatment Planned', 'Oldest Plan', 'Value', 'Action'],
+    list.map((e) => {
+      const p = D.patByNum.get(e.patNum);
+      return `<tr>
+        <td><strong>${esc(p ? nameOf(p) : 'Patient #' + e.patNum)}</strong></td>
+        <td class="contact">${esc(p ? phoneOf(p) : '')}${p && p.Email ? '<br>' + esc(p.Email) : ''}</td>
+        <td>${e.procedures.slice(0, 6).map((x) => esc(`${x.code} ${x.description}`)).join('<br>')}<div class="sub">${e.procedures.length} procedure${e.procedures.length > 1 ? 's' : ''}</div></td>
+        <td>${e.oldest ? esc(e.oldest) : '—'}</td>
+        <td class="money">${usd(e.total)}</td>
+        <td><span class="pill neutral">Queue for outreach</span></td></tr>`;
+    }), 'No unscheduled treatment — everything is booked.');
+}
+
+function scheduleRows(list, grouped = true) {
+  if (!list.length) return '<div class="empty">No appointments in the next 14 days.</div>';
+  let html = '<table><thead><tr><th>Time</th><th>Patient</th><th>Provider</th><th>Procedures</th><th>Status</th></tr></thead><tbody>';
+  let lastDay = '';
+  for (const a of list) {
+    const day = a.AptDateTime.slice(0, 10);
+    if (grouped && day !== lastDay) {
+      html += `</tbody></table><div class="daygroup">${new Date(day + 'T12:00').toDateString()}</div><table><tbody>`;
+      lastDay = day;
+    }
+    const p = D.patByNum.get(a.PatNum);
+    html += `<tr>
+      <td style="white-space:nowrap">${esc(a.AptDateTime.slice(11, 16))}</td>
+      <td><strong>${esc(p ? nameOf(p) : 'Patient #' + a.PatNum)}</strong>${a.IsNewPatient === 'true' ? ' <span class="pill ok">NEW</span>' : ''}<div class="sub">${esc(p ? phoneOf(p) : '')}</div></td>
+      <td>${esc(a.provAbbr || '')}</td>
+      <td>${esc(a.ProcDescript) || '—'}</td>
+      <td><span class="pill ${(a.confirmed || '') === 'Unconfirmed' ? 'warn' : 'ok'}">${esc(a.confirmed || 'Unknown')}</span></td></tr>`;
+  }
+  return html + '</tbody></table>';
+}
+
+function renderPatients(filter = '') {
+  const f = filter.toLowerCase();
+  const list = D.patients.filter((p) =>
+    !f || nameOf(p).toLowerCase().includes(f) || phoneOf(p).includes(f) || (p.City || '').toLowerCase().includes(f));
+  $('patientCount').textContent = `${list.length} of ${D.patients.length} patients`;
+  $('patientsTable').innerHTML = table(['Patient', 'Status', 'Birthdate', 'Contact', 'City', 'Provider'],
+    list.slice(0, 80).map((p) => `<tr>
+      <td><strong>${esc(nameOf(p))}</strong></td>
+      <td><span class="pill ${p.PatStatus === 'Patient' ? 'ok' : 'neutral'}">${esc(p.PatStatus)}</span></td>
+      <td>${isNullDate(p.Birthdate) ? '—' : esc(p.Birthdate)}</td>
+      <td class="contact">${esc(phoneOf(p))}${p.Email ? '<br>' + esc(p.Email) : ''}</td>
+      <td>${esc(p.City) || '—'}</td>
+      <td>${esc(p.priProvAbbr) || '—'}</td></tr>`),
+    'No patients match.');
+}
+
+function renderRecall() {
+  $('recallBadge').textContent = D.overdue.length;
+  $('recallTable').innerHTML = table(['Patient', 'Contact', 'Due Date', 'Interval', 'Action'],
+    D.overdue.slice(0, 40).map((r) => {
+      const p = D.patByNum.get(r.PatNum);
+      return `<tr>
+        <td><strong>${esc(p ? nameOf(p) : 'Patient #' + r.PatNum)}</strong></td>
+        <td class="contact">${esc(p ? phoneOf(p) : '')}${p && p.Email ? '<br>' + esc(p.Email) : ''}</td>
+        <td><span class="pill bad">${esc(r.DateDue)}</span></td>
+        <td>${esc(r.RecallInterval)}</td>
+        <td><span class="pill neutral">Queue for outreach</span></td></tr>`;
+    }), 'No overdue recalls.');
+}
+
+// ===== Lead Pipeline demo =====
+function roiCalc() {
+  const c = +$('roiCalls').value || 0, m = (+$('roiMiss').value || 0) / 100,
+        r = (+$('roiRec').value || 0) / 100, v = +$('roiVal').value || 0;
+  $('roiOut').textContent = usd(c * m * r * v * 4.33);
+}
+function renderPipeline() {
+  ['roiCalls', 'roiMiss', 'roiRec', 'roiVal'].forEach((id) => $(id).addEventListener('input', roiCalc));
+  roiCalc();
+  $('pipeKpis').innerHTML =
+    kpiCard('Calls this week', '247', 'inbound, both locations') +
+    kpiCard('Leads captured', '86', "didn't book on first call") +
+    kpiCard('Agent touches', '312', 'SMS + voice, consent-gated') +
+    kpiCard('Booked by agent', '31', 'this month', 'money') +
+    kpiCard('Opted out', '4', 'honored instantly');
+  const names = ['Maria G.', 'J. Hernandez', 'D. Williams', 'A. Tran', 'S. Lopez', 'K. Johnson', 'R. Patel', 'C. Nguyen', 'T. Brooks', 'L. Rivera', 'M. Flores', 'B. Carter', 'E. Gomez', 'N. Davis', 'P. Castillo'];
+  const intents = ['Pricing — cleaning', 'New patient (Medicaid)', 'MCNA coverage question', 'Pricing — crown', 'Recall lapsed', 'Tx follow-up'];
+  const cols = [['New', 6], ['Contacted', 8], ['Engaged', 5], ['Scheduled', 7], ['Converted (mo.)', 31]];
+  const notes = [['called 2h ago', 'called 4h ago', 'web form 1h ago'], ['SMS sent day 0', 'SMS sent day 2', 'call attempted'], ['replied yesterday', 'asked about times', 'asked about MCNA'], ['booked Thu 1:30', 'booked Fri 10:00', 'booked Mon 9:20'], ['visit completed', 'first visit 6/2', 'first visit 5/28']];
+  let n = 0;
+  $('pipeCols').innerHTML = cols.map(([t, k], ci) =>
+    `<div class="col"><h4>${t} <span>${k}</span></h4>` +
+    Array.from({ length: 3 }, (_, i) => {
+      const nm = names[(n++) % names.length];
+      return `<div class="leadcard"><b>${nm}</b><span class="sub">${notes[ci][i]}</span><span class="tag">${intents[(n + i) % intents.length]}</span></div>`;
+    }).join('') +
+    (k > 3 ? `<div class="sub" style="text-align:center;padding:4px">+${k - 3} more</div>` : '') + '</div>').join('');
+}
+
+const leadScript = [
+  { k: 'sys', t: 'Mon 11:42 AM — inbound call from (817) 555-0143 · transcript excerpt' },
+  { k: 'in', t: 'Hi, how much is a cleaning and exam for my son? We have Medicaid.' },
+  { k: 'out', t: "We're in-network with MCNA, DentaQuest, and UnitedHealthcare — with Medicaid his cleaning and exam are fully covered, $0 out of pocket. Want me to text you our next openings?", m: 'Front desk (or Reception Agent)' },
+  { k: 'in', t: 'Sure, that works.' },
+  { k: 'sys', t: '✓ Lead created · intent: pricing / Medicaid · SMS consent captured · cadence started' },
+  { k: 'out', t: "Hi! It's Atlas Dental Test Office. Openings for a fully-covered cleaning + exam: Thu 1:30 PM or Fri 10:00 AM. Reply 1 or 2 to book.", m: 'Follow-Up Agent · SMS · Day 0' },
+  { k: 'sys', t: 'Day 2 — no reply → second touch (quiet hours respected)' },
+  { k: 'out', t: "Quick reminder — your son's visit is 100% covered by MCNA Medicaid, no cost to you. Thursday 1:30 still open. Want it?", m: 'Follow-Up Agent · SMS · Day 2' },
+  { k: 'in', t: 'yes thursday works' },
+  { k: 'out', t: "You're booked! Thu 1:30 PM with Dr. Albert ✓ We'll text a reminder the day before. Reply STOP anytime to opt out.", m: 'Booked directly in Open Dental via API' },
+  { k: 'sys', t: '● Lead → CONVERTED · attributed to Follow-Up Agent · est. first-visit production $240 · without follow-up this caller was lost' },
+];
+
+function playLeadJourney() {
+  const box = $('leadThread');
+  box.innerHTML = '';
+  $('playLead').disabled = true;
+  let i = 0;
+  (function tick() {
+    if (i >= leadScript.length) { $('playLead').disabled = false; return; }
+    const l = leadScript[i++];
+    box.insertAdjacentHTML('beforeend', l.k === 'sys'
+      ? `<div class="sysline">— ${esc(l.t)} —</div>`
+      : `<div class="bubble ${l.k}">${esc(l.t)}${l.m ? `<div class="meta">${esc(l.m)}</div>` : ''}</div>`);
+    box.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(tick, l.k === 'sys' ? 1100 : 1400);
+  })();
+}
+
+// ===== Verification demo =====
+function renderVerify() {
+  $('verKpis').innerHTML =
+    kpiCard("Tomorrow's appts", '38', 'both locations') +
+    kpiCard('Verified electronically', '31', 'TMHP 270/271 + DMO portal') +
+    kpiCard('Resolved by AI call', '6', 'AIS IVR + DMO reps', 'money') +
+    kpiCard('Needs review', '1', 'low-confidence extraction', 'alert') +
+    kpiCard('Front-desk time saved', '≈4.2 h', 'vs. manual verification');
+  const payers = ['MCNA', 'DentaQuest', 'UHC Dental'];
+  const chains = ['271 ✓ → Portal ✓', '271 ✓ → Portal ✓', '271 ✓ → AIS IVR ✓', '271 ✓ → Portal ✓', '271 ✓ → Rep call ✓', '271 ✓ → Portal ✓', '271 ✓ → Rep call ⚠'];
+  const rows = D.patients.slice(0, 7).map((p, i) => `<tr>
+    <td><strong>${esc(nameOf(p))}</strong><div class="sub">DOB ${isNullDate(p.Birthdate) ? '—' : esc(p.Birthdate)}</div></td>
+    <td>${payers[i % 3]}</td>
+    <td style="white-space:nowrap">${chains[i]}</td>
+    <td>${i === 6 ? '<span class="pill warn">Review</span>' : '<span class="pill ok">Verified</span>'}</td>
+    <td class="sub">${i === 6 ? 'frequency answer ambiguous — audio clip linked for front desk' : 'auto-published · expires month-end'}</td></tr>`);
+  $('verTable').innerHTML = `<table><thead><tr><th>Patient</th><th>DMO</th><th>Channel chain</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+const callScript = [
+  { c: 't-sys', t: '21:04 nightly batch · 38 appointments tomorrow · 31 verified electronically · 6 routed to calling agent · playing one call' },
+  { c: 't-sys', t: 'TMHP 271 already confirmed: eligible this month, enrolled with MCNA → calling MCNA provider line for benefits + history' },
+  { c: 't-ivr', t: 'IVR  Thank you for calling MCNA Dental provider services. For eligibility and benefits, press 1.' },
+  { c: 't-agent', t: 'AGENT  <span class="dtmf">1</span>' },
+  { c: 't-ivr', t: 'IVR  Please enter your 10-digit provider NPI.' },
+  { c: 't-agent', t: 'AGENT  <span class="dtmf">1 5 2 2 8 6 4 1 8 2</span>' },
+  { c: 't-ivr', t: 'IVR  Enter the member ID, followed by pound.' },
+  { c: 't-agent', t: 'AGENT  <span class="dtmf">5 2 8 4 4 1 0 9 3 #</span>' },
+  { c: 't-ivr', t: 'IVR  Please hold for the next available representative.' },
+  { c: 't-sys', t: 'on hold 6m 40s — zero human time spent · agent waits' },
+  { c: 't-rep', t: 'REP  Provider services, this is Dana.' },
+  { c: 't-agent', t: 'AGENT  Hi Dana — this is an automated assistant calling on behalf of Atlas Dental, NPI 1522864182, on a recorded line. Verifying benefits for member ID 528441093, DOB 02/07/2017.' },
+  { c: 't-rep', t: 'REP  One moment… member is active. D1120 prophy covered twice per calendar year, last paid 11/14/2025. D0272 bitewings once per 12 months, last 11/14/2025.' },
+  { c: 't-agent', t: 'AGENT  Thank you. And is prior authorization required for D2930, stainless steel crown, for members under 21?' },
+  { c: 't-rep', t: 'REP  No PA required for D2930 under 21.' },
+  { c: 't-agent', t: 'AGENT  Perfect — may I get a call reference number?' },
+  { c: 't-rep', t: 'REP  Reference 7741-2236.' },
+  { c: 't-agent', t: 'AGENT  Thanks Dana, have a good evening.' },
+  { c: 't-sys', t: 'call ended 9m 12s · transcript → extraction · confidence 0.97 → auto-published to tomorrow\'s schedule' },
+];
+
+function playVerificationCall() {
+  const box = $('callBox');
+  box.innerHTML = '';
+  $('vrec').innerHTML = '';
+  $('playCall').disabled = true;
+  let i = 0;
+  (function tick() {
+    if (i >= callScript.length) { showVrec(); $('playCall').disabled = false; return; }
+    const l = callScript[i++];
+    box.insertAdjacentHTML('beforeend', `<div class="${l.c}">${l.t}</div>`);
+    box.scrollTop = box.scrollHeight;
+    setTimeout(tick, l.c === 't-sys' ? 1300 : 1050);
+  })();
+}
+
+function showVrec() {
+  $('vrec').innerHTML = `
+    <div class="vrec">
+      <div class="vh"><span>✓ VerificationRecord — auto-published (confidence 0.97)</span><span>REF 7741-2236</span></div>
+      <table>
+        <thead><tr><th>Field</th><th>Result</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Eligibility (June 2026)</td><td><span class="pill ok">Active</span></td><td>TMHP 271</td></tr>
+          <tr><td>DMO enrollment</td><td>MCNA Dental</td><td>TMHP 271</td></tr>
+          <tr><td>D1120 prophy</td><td>Covered · 2/calendar yr · last 11/14/2025 → <b>eligible for tomorrow's visit</b></td><td>MCNA rep call</td></tr>
+          <tr><td>D0272 bitewings</td><td>Covered · 1/12mo · last 11/14/2025 → <b>not eligible until 11/14/2026</b></td><td>MCNA rep call</td></tr>
+          <tr><td>D2930 SSC</td><td>Covered · no prior auth under 21</td><td>MCNA rep call</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sub" style="margin-top:8px">Front desk sees this on tomorrow's schedule before the patient walks in. The bitewings flag alone prevents a write-off.</div>`;
+}
+
+// ===== Preview screens =====
+function renderAgents() {
+  const u = D.unscheduled[0];
+  const uName = u && D.patByNum.get(u.patNum) ? nameOf(D.patByNum.get(u.patNum)) : 'top patient';
+  const agents = [
+    { icon: '💬', name: 'Follow-Up Agent', on: true,
+      desc: `Works every lead — price shoppers, unscheduled treatment (e.g., ${esc(uName)}, ${u ? usd(u.total) : ''}), lapsed recall — until they book or opt out. See Lead Pipeline for the full demo.`,
+      s1: ['Queue today', D.unscheduled.length + D.overdue.length], s2: ['Pipeline value', usd(D.unscheduledValue)], s3: ['Channel', 'SMS → Voice'] },
+    { icon: '🛡', name: 'Medicaid Verification Agent', on: true,
+      desc: 'Verifies tomorrow\'s schedule nightly: TMHP 270/271 → DMO portal → AI phone call (AIS IVR + MCNA/DentaQuest/UHC reps). See Verification for the call demo.',
+      s1: ['Coverage', '38/38'], s2: ['By AI call', '6'], s3: ['Time saved', '4.2 h/day'] },
+    { icon: '📞', name: 'Reception Agent', on: false,
+      desc: 'Answers every inbound call 24/7 — books, reschedules, confirms in Open Dental, and feeds every non-booking caller into the Follow-Up Agent pipeline.',
+      s1: ['Calls handled', '—'], s2: ['Booked', '—'], s3: ['Avg. answer', '< 2 rings'] },
+    { icon: '🔁', name: 'Recall & Reactivation Agent', on: false,
+      desc: `Reaches patients past their hygiene recall date — ${D.overdue.length} currently overdue at this office — and fills hygiene gaps in the schedule.`,
+      s1: ['Overdue now', D.overdue.length], s2: ['Re-booked', '—'], s3: ['Cadence', '3-touch'] },
+  ];
+  $('agentCards').innerHTML = agents.map((a) => `
+    <div class="agent">
+      <div class="head"><div class="orb">${a.icon}</div><div><h3>${a.name}</h3><span class="pill ${a.on ? 'ok' : 'neutral'}">${a.on ? 'Demo available' : 'Planned'}</span></div></div>
+      <div class="desc">${a.desc}</div>
+      <div class="stats"><div><b>${a.s1[1]}</b>${a.s1[0]}</div><div><b>${a.s2[1]}</b>${a.s2[0]}</div><div><b>${a.s3[1]}</b>${a.s3[0]}</div></div>
+      <div class="row"><span class="sub">Goes live in v0.4 (Atlas voice stack)</span><div class="switch ${a.on ? 'on' : ''}"></div></div>
+    </div>`).join('');
+}
+
+function renderChat() {
+  const picks = D.unscheduled.slice(0, 4).map((e) => D.patByNum.get(e.patNum)).filter(Boolean);
+  const first = picks[0];
+  $('convList').innerHTML = picks.map((p, i) => `
+    <div class="conv ${i === 0 ? 'active' : ''}">
+      <div class="who">${esc(nameOf(p))} <time>${i === 0 ? '2m' : i + 'h'}</time></div>
+      <div class="last">${i === 0 ? 'Yes, what times do you have on Thursday?' : 'Sample conversation (preview)'}</div>
+    </div>`).join('');
+  const u = D.unscheduled[0];
+  $('thread').innerHTML = first ? `
+    <div class="bubble out">Hi ${esc(first.FName)}, it's Atlas Dental Test Office. Dr. Albert recommended ${u && u.procedures[0] ? esc(u.procedures[0].description.toLowerCase()) : 'treatment'} at your last visit — we'd love to get that scheduled. Would Thursday afternoon work?<div class="meta">Sent by Follow-Up Agent · preview</div></div>
+    <div class="bubble in">Yes, what times do you have on Thursday?</div>
+    <div class="ai-suggest"><b>AI suggested reply</b><br>"We have 1:30 PM or 3:00 PM open Thursday with Dr. Albert. Reply 1 or 2 and you're booked — confirmation sent right away."<div class="sub" style="margin-top:6px">In v0.4: one click sends via your Twilio number and books the slot in Open Dental.</div></div>` : '';
+}
+
+// ===== Router =====
+const titles = {
+  dashboard: ['Dashboard', 'Cross-location overview'],
+  schedule: ['Schedule', 'Next 14 days'],
+  patients: ['Patients', 'Practice database (live from Open Dental)'],
+  followup: ['Treatment Follow-Up', 'Unscheduled treatment pipeline'],
+  recall: ['Recall', 'Hygiene reactivation'],
+  pipeline: ['Lead Pipeline', 'Follow-Up Agent — simulated demo'],
+  verify: ['Verification', 'Medicaid Verification Agent — simulated demo'],
+  chat: ['Chat', 'Patient messaging — preview'],
+  agents: ['AI Agents', 'Voice & outreach automation'],
+  settings: ['Settings', 'Locations & compliance'],
+};
+document.querySelectorAll('nav a[data-page]').forEach((a) => {
+  a.onclick = () => {
+    document.querySelectorAll('nav a').forEach((x) => x.classList.remove('active'));
+    a.classList.add('active');
+    const page = a.dataset.page;
+    document.querySelectorAll('.page').forEach((p) => p.classList.add('hidden'));
+    $('page-' + page).classList.remove('hidden');
+    $('pageTitle').textContent = titles[page][0];
+    $('pageCrumb').textContent = titles[page][1];
+  };
+});
+$('patientSearch').addEventListener('input', (e) => renderPatients(e.target.value));
+$('playLead').addEventListener('click', playLeadJourney);
+$('playCall').addEventListener('click', playVerificationCall);
+
+// ===== Init =====
+(async function init() {
+  try {
+    await loadData();
+  } catch (e) {
+    $('status').innerHTML = 'Could not reach Open Dental: ' + esc(e.message);
+    return;
+  }
+  renderDashboard();
+  $('apptBadge').textContent = D.scheduled.length;
+  $('scheduleTable').innerHTML = scheduleRows(D.scheduled, true);
+  renderPatients();
+  $('unschedBadge').textContent = usd(D.unscheduledValue);
+  $('followupTable').innerHTML = followupRows(D.unscheduled.slice(0, 40));
+  renderRecall();
+  renderPipeline();
+  renderVerify();
+  renderAgents();
+  renderChat();
+  $('status').classList.add('hidden');
+  $('page-dashboard').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>
