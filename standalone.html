@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas Dental — Practice Pulse</title>
+<style>
+  :root {
+    --bg: #f6f8fa; --card: #ffffff; --ink: #1a2733; --muted: #5d6b7a;
+    --line: #e3e8ee; --accent: #0e7490; --accent-soft: #e0f2f7;
+    --good: #15803d; --warn: #b45309; --bad: #b91c1c;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 15px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 28px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+  header h1 span { color: var(--accent); }
+  header .sub { color: var(--muted); font-size: 13px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 26px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .kpi .label { font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .kpi .value { font-size: 28px; font-weight: 750; margin-top: 4px; letter-spacing: -0.5px; }
+  .kpi .hint { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .kpi.money .value { color: var(--accent); }
+  .kpi.alert .value { color: var(--bad); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 22px; overflow: hidden; }
+  section > h2 { font-size: 15px; padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  section > h2 .badge { background: var(--accent-soft); color: var(--accent); font-size: 12px; padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+  section > h2 .note { margin-left: auto; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 9px 18px; border-bottom: 1px solid var(--line); background: #fafbfc; }
+  td { padding: 10px 18px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafcfd; }
+  .money { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+  .pill.ok { background: #ecfdf3; color: var(--good); }
+  .pill.warn { background: #fef6e7; color: var(--warn); }
+  .pill.bad { background: #feecec; color: var(--bad); }
+  .procs { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+  .contact { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+  .empty { padding: 26px 18px; color: var(--muted); text-align: center; }
+  #status { padding: 60px; text-align: center; color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Atlas <span>Dental</span></h1>
+    <div class="sub">Practice Pulse — powered by Open Dental (test office demo)</div>
+  </div>
+</header>
+
+<main>
+  <div id="status">Loading practice data from Open Dental…</div>
+  <div id="content" style="display:none">
+    <div class="kpis" id="kpis"></div>
+
+    <section>
+      <h2>Unscheduled Treatment <span class="badge" id="unschedBadge"></span>
+        <span class="note">Treatment-planned dollars with no upcoming appointment — today's call list</span></h2>
+      <div id="unscheduledTable"></div>
+    </section>
+
+    <section>
+      <h2>Overdue Recall <span class="badge" id="recallBadge"></span>
+        <span class="note">Hygiene recall past due with nothing scheduled</span></h2>
+      <div id="recallTable"></div>
+    </section>
+
+    <section>
+      <h2>Upcoming Appointments <span class="badge" id="apptBadge"></span>
+        <span class="note">Next 14 days</span></h2>
+      <div id="apptTable"></div>
+    </section>
+  </div>
+</main>
+<footer id="meta"></footer>
+
+<script>
+// ====== Open Dental client (browser, demo credentials — public test DB, no PHI) ======
+const BASE_URL = 'https://api.opendental.com/api/v1';
+const AUTH = 'ODFHIR NFF6i0KrXrxDkZHt/VzkmZEaUWOjnQX2z'; // Open Dental PUBLIC test keys
+const NULL_DATE = '0001-01-01';
+const isNullDate = (s) => !s || s.startsWith(NULL_DATE);
+const fmtDate = (d) => d.toISOString().slice(0, 10);
+
+async function odGet(path, params = {}) {
+  const url = new URL(`${BASE_URL}/${path}`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
+  const res = await fetch(url, { headers: { Authorization: AUTH } });
+  if (!res.ok) throw new Error(`Open Dental API ${res.status} on ${path}`);
+  return res.json();
+}
+
+async function odGetAll(path, params = {}) {
+  const out = [];
+  for (let page = 0; page < 10; page++) {
+    const batch = await odGet(path, { ...params, Limit: 100, Offset: page * 100 });
+    out.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return out;
+}
+
+async function getPatients(patNums, concurrency = 8) {
+  const unique = [...new Set(patNums)];
+  const map = new Map();
+  let i = 0;
+  async function worker() {
+    while (i < unique.length) {
+      const n = unique[i++];
+      try { map.set(n, await odGet(`patients/${n}`)); } catch {}
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, unique.length) }, worker));
+  return map;
+}
+
+function patientLite(p, patNum) {
+  if (!p) return { patNum, name: `Patient #${patNum}`, phone: '', email: '' };
+  return {
+    patNum,
+    name: `${p.FName || ''} ${p.LName || ''}`.trim() || `Patient #${patNum}`,
+    phone: p.WirelessPhone || p.HmPhone || p.WkPhone || '',
+    email: p.Email || '',
+  };
+}
+
+// ====== Aggregation (same logic as the server version) ======
+async function buildDashboard() {
+  const today = new Date();
+  const todayStr = fmtDate(today);
+  const in14 = fmtDate(new Date(today.getTime() + 14 * 86400000));
+
+  const [appointments, tpProcs, recalls, providers] = await Promise.all([
+    odGetAll('appointments', { dateStart: todayStr, dateEnd: in14 }),
+    odGetAll('procedurelogs', { ProcStatus: 'TP' }),
+    odGetAll('recalls'),
+    odGetAll('providers'),
+  ]);
+
+  const providerByNum = new Map(providers.map((p) => [p.ProvNum, p]));
+  const scheduled = appointments.filter((a) => a.AptStatus === 'Scheduled');
+  const unconfirmed = scheduled.filter((a) => (a.confirmed || '') === 'Unconfirmed');
+  const patientsWithFutureApt = new Set(scheduled.map((a) => a.PatNum));
+
+  const byPatient = new Map();
+  for (const proc of tpProcs) {
+    if (patientsWithFutureApt.has(proc.PatNum)) continue;
+    const e = byPatient.get(proc.PatNum) || { patNum: proc.PatNum, total: 0, procedures: [], oldestTpDate: null };
+    e.total += parseFloat(proc.ProcFee || '0') * (proc.UnitQty || 1);
+    e.procedures.push({ code: proc.procCode, description: proc.descript });
+    const d = isNullDate(proc.DateTP) ? null : proc.DateTP;
+    if (d && (!e.oldestTpDate || d < e.oldestTpDate)) e.oldestTpDate = d;
+    byPatient.set(proc.PatNum, e);
+  }
+  const unscheduled = [...byPatient.values()].sort((a, b) => b.total - a.total);
+  const unscheduledValue = unscheduled.reduce((s, e) => s + e.total, 0);
+
+  const overdue = recalls.filter((r) =>
+    r.IsDisabled !== 'true' && !isNullDate(r.DateDue) && r.DateDue < todayStr && isNullDate(r.DateScheduled));
+  overdue.sort((a, b) => (a.DateDue < b.DateDue ? -1 : 1));
+
+  const topUnscheduled = unscheduled.slice(0, 25);
+  const topRecalls = overdue.slice(0, 25);
+  const patientMap = await getPatients([
+    ...topUnscheduled.map((e) => e.patNum),
+    ...topRecalls.map((r) => r.PatNum),
+    ...scheduled.map((a) => a.PatNum),
+  ]);
+
+  return {
+    kpis: {
+      unscheduledValue, unscheduledPatients: unscheduled.length,
+      overdueRecalls: overdue.length, appointmentsNext14: scheduled.length,
+      unconfirmedNext14: unconfirmed.length,
+    },
+    unscheduledTreatment: topUnscheduled.map((e) => ({
+      ...patientLite(patientMap.get(e.patNum), e.patNum),
+      total: e.total, oldestTpDate: e.oldestTpDate, procedures: e.procedures.slice(0, 8),
+    })),
+    overdueRecall: topRecalls.map((r) => ({
+      ...patientLite(patientMap.get(r.PatNum), r.PatNum),
+      dateDue: r.DateDue, interval: r.RecallInterval,
+    })),
+    upcomingAppointments: scheduled
+      .sort((a, b) => (a.AptDateTime < b.AptDateTime ? -1 : 1)).slice(0, 40)
+      .map((a) => ({
+        ...patientLite(patientMap.get(a.PatNum), a.PatNum),
+        dateTime: a.AptDateTime,
+        provider: a.provAbbr || providerByNum.get(a.ProvNum)?.Abbr || '',
+        confirmed: a.confirmed || 'Unknown',
+        isNewPatient: a.IsNewPatient === 'true',
+        procedures: a.ProcDescript || '',
+      })),
+  };
+}
+
+// ====== Rendering ======
+const $ = (id) => document.getElementById(id);
+const usd = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function kpiCard(label, value, hint, cls = '') {
+  return `<div class="kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`;
+}
+function table(headers, rows, emptyMsg) {
+  if (!rows.length) return `<div class="empty">${emptyMsg}</div>`;
+  return `<table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+(async function init() {
+  let d;
+  try {
+    d = await buildDashboard();
+  } catch (e) {
+    $('status').textContent = 'Could not reach Open Dental: ' + e.message;
+    return;
+  }
+  $('kpis').innerHTML =
+    kpiCard('Unscheduled Treatment', usd(d.kpis.unscheduledValue), `${d.kpis.unscheduledPatients} patients`, 'money') +
+    kpiCard('Overdue Recall', d.kpis.overdueRecalls, 'patients past due', d.kpis.overdueRecalls > 0 ? 'alert' : '') +
+    kpiCard('Appointments', d.kpis.appointmentsNext14, 'next 14 days') +
+    kpiCard('Unconfirmed', d.kpis.unconfirmedNext14, 'need confirmation', d.kpis.unconfirmedNext14 > 0 ? 'alert' : '');
+
+  $('unschedBadge').textContent = usd(d.kpis.unscheduledValue);
+  $('unscheduledTable').innerHTML = table(
+    ['Patient', 'Contact', 'Treatment Planned', 'Oldest Plan', 'Value'],
+    d.unscheduledTreatment.map((p) => `<tr>
+      <td><strong>${esc(p.name)}</strong></td>
+      <td class="contact">${esc(p.phone)}${p.email ? '<br>' + esc(p.email) : ''}</td>
+      <td>${p.procedures.map((x) => esc(`${x.code} ${x.description}`)).join('<br>')}
+          <div class="procs">${p.procedures.length} procedure${p.procedures.length > 1 ? 's' : ''}</div></td>
+      <td>${p.oldestTpDate ? esc(p.oldestTpDate) : '—'}</td>
+      <td class="money">${usd(p.total)}</td></tr>`),
+    'No unscheduled treatment — everything is booked.');
+
+  $('recallBadge').textContent = d.kpis.overdueRecalls;
+  $('recallTable').innerHTML = table(
+    ['Patient', 'Contact', 'Due Date', 'Interval'],
+    d.overdueRecall.map((r) => `<tr>
+      <td><strong>${esc(r.name)}</strong></td>
+      <td class="contact">${esc(r.phone)}${r.email ? '<br>' + esc(r.email) : ''}</td>
+      <td><span class="pill bad">${esc(r.dateDue)}</span></td>
+      <td>${esc(r.interval)}</td></tr>`),
+    'No overdue recalls.');
+
+  $('apptBadge').textContent = d.kpis.appointmentsNext14;
+  $('apptTable').innerHTML = table(
+    ['When', 'Patient', 'Provider', 'Procedures', 'Status'],
+    d.upcomingAppointments.map((a) => `<tr>
+      <td style="white-space:nowrap">${esc(a.dateTime.slice(0, 16))}</td>
+      <td><strong>${esc(a.name)}</strong>${a.isNewPatient ? ' <span class="pill ok">NEW</span>' : ''}</td>
+      <td>${esc(a.provider)}</td>
+      <td>${esc(a.procedures) || '—'}</td>
+      <td><span class="pill ${a.confirmed === 'Unconfirmed' ? 'warn' : 'ok'}">${esc(a.confirmed)}</span></td></tr>`),
+    'No appointments scheduled in the next 14 days.');
+
+  $('meta').textContent = `Open Dental Test Office · refreshed ${new Date().toLocaleString()} · standalone demo (no PHI)`;
+  $('status').style.display = 'none';
+  $('content').style.display = 'block';
+})();
+</script>
+</body>
+</html>
