@@ -280,7 +280,8 @@
   <!-- ============ OPEN QUESTIONS ============ -->
   <div class="page hidden" id="page-questions">
     <div class="preview-banner"><span class="tag" id="qProgress">0 / 0</span>
-      <div><b>Decisions to work through</b> — with Enayat &amp; Hovik, and internally. Check items off and add notes; everything saves in this browser so you can work the list across sessions.</div>
+      <div><b>Decisions to work through</b> — with Enayat &amp; Hovik, and internally. Check items off and add notes. To move answers to another computer, use <b>Copy share link</b> — the answers travel inside the link.</div>
+      <button class="playbtn" id="shareBtn" style="margin-left:auto;white-space:nowrap">⧉ Copy share link</button>
     </div>
     <div id="qWrap"></div>
   </div>
@@ -760,6 +761,28 @@ function renderQuestions() {
     }).join('') + '</section>').join('');
   updateQProgress();
 }
+function qExportLink() {
+  const data = {};
+  QUESTIONS.forEach(([g, qs], gi) => qs.forEach((q, qi) => {
+    const id = `q_${gi}_${qi}`;
+    const s = localStorage.getItem(id);
+    if (s && s !== '{}') data[id] = JSON.parse(s);
+  }));
+  const enc = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const url = location.origin + location.pathname + '#q=' + enc;
+  navigator.clipboard.writeText(url).then(() => {
+    const b = $('shareBtn');
+    b.textContent = '✓ Copied — answers travel with the link';
+    setTimeout(() => { b.textContent = '⧉ Copy share link'; }, 2600);
+  });
+}
+function qImportFromHash() {
+  if (!location.hash.startsWith('#q=')) return;
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
+    Object.entries(data).forEach(([k, v]) => localStorage.setItem(k, JSON.stringify(v)));
+  } catch (e) { /* malformed hash — ignore */ }
+}
 
 // ===== Router =====
 const titles = {
@@ -790,6 +813,7 @@ document.querySelectorAll('nav a[data-page]').forEach((a) => {
 $('patientSearch').addEventListener('input', (e) => renderPatients(e.target.value));
 $('playLead').addEventListener('click', playLeadJourney);
 $('playCall').addEventListener('click', playVerificationCall);
+$('shareBtn').addEventListener('click', qExportLink);
 
 // ===== Init =====
 (async function init() {
@@ -810,6 +834,7 @@ $('playCall').addEventListener('click', playVerificationCall);
   renderVerify();
   renderAgents();
   renderChat();
+  qImportFromHash();
   renderQuestions();
   $('status').classList.add('hidden');
   $('page-dashboard').classList.remove('hidden');
